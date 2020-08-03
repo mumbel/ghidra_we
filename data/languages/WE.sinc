@@ -1,0 +1,1272 @@
+# sleigh specification file for WE 32100
+
+#TODO
+define alignment=1;
+
+define space ram type=ram_space size=4 default;
+define space register type=register_space size=4;
+
+define register offset=0x0 size=4 [ r0 r1 r2 r3 r4 r5 r6 r7 r8 fp ap psw sp pcbp isp pc ];
+
+# the OP are all one byte, but broken down for the CC branch/return
+define token opbyte (8)
+  op = (0, 7)
+  op0607 = (6, 7)
+  op0205 = (2, 5)
+  op0101 = (1, 1)
+  op0000 = (0, 0)
+;
+
+define token descriptor (8)
+  mode = (4, 7)
+  op0407 = (4, 7)
+  reg = (0, 3)
+  op0003 = (0, 3)
+  so = (0, 3)
+  extype = (0, 3)
+;
+
+define token data1 (8)
+  op0007 = (0 ,7)
+  imm8 = (0, 7) signed
+;
+
+define token data2 (16)
+  op0015 = (0, 15)
+  imm16 = (0, 15) signed
+;
+
+define token data4 (32)
+  op0031 = (0, 31)
+  imm32 = (0, 31) signed
+;
+
+attach variables [ reg ] [ r0 r1 r2 r3 r4 r5 r6 r7 r8 fp ap psw sp pcbp isp pc ];
+
+# psw
+@define Ccc "psw[18,1]"
+@define Vcc "psw[19,1]"
+@define Zcc "psw[20,1]"
+@define Ncc "psw[21,1]"
+
+macro cond_case_1(__dst) {
+      local __msb:4 = 0x80000000;
+      $(Ncc) = (__msb & __dst) != 0;
+      $(Zcc) = __dst == 0;
+      $(Ccc) = 0;
+      $(Vcc) = 0;
+}
+
+macro cond_case_2(__result) {
+      $(Ncc) = __result s< 0;
+      $(Zcc) = __result == 0;
+      $(Ccc) = 0; #TODO 1 on carry or borrow
+      $(Vcc) = 0; #TODO 1 on integer overflow
+}
+
+macro cond_case_3(__dst) {
+      $(Ncc) = __dst s< 0;
+      $(Zcc) = __dst == 0;
+      $(Ccc) = 0;
+      $(Vcc) = 0; #TODO 1 on integer overflow
+}
+
+macro cond_case_4(__dst) {
+      $(Ncc) = __dst s< 0;
+      $(Zcc) = __dst == 0;
+      $(Ccc) = 0;
+      $(Vcc) = 0; #TODO 1 on integer overflow
+}
+
+macro cond_case_5(__dst) {
+      $(Ncc) = __dst s< 0;
+      $(Zcc) = __dst == 0;
+      $(Ccc) = 0;
+      $(Vcc) = 0;
+}
+
+macro cond_case_6(__src) {
+      $(Ncc) = __src s< 0;
+      $(Zcc) = __src == 0;
+      $(Ccc) = 0;
+      $(Vcc) = 0;
+}
+
+macro cond_case_7(__result) {
+      local __msb:4 = 0x80000000;
+      $(Ncc) = (__msb & __result) != 0;
+      $(Zcc) = __result == 0;
+      $(Ccc) = 0;
+      $(Vcc) = 0;
+}
+
+macro cond_case_8(__new_psw) {
+      $(Ncc) = __new_psw[21,1];
+      $(Zcc) = __new_psw[20,1];
+      $(Ccc) = __new_psw[18,1];
+      $(Vcc) = __new_psw[19,1];
+}
+
+macro cond_case_9(__restored_psw) {
+      $(Ncc) = __restored_psw[21,1];
+      $(Zcc) = __restored_psw[20,1];
+      $(Ccc) = __restored_psw[18,1];
+      $(Vcc) = __restored_psw[19,1];
+}
+
+macro cond_case_10(__status) {
+      $(Ncc) = __status[21,1];
+      $(Zcc) = __status[20,1];
+      $(Ccc) = __status[18,1];
+      $(Vcc) = __status[19,1];
+}
+
+# program control
+disp8:  addr  is imm8  [ addr = inst_start + imm8; ]
+{
+	export *:4 addr;
+}
+
+disp16: addr  is imm16 [ addr = inst_start + imm16; ]
+{
+	export *:4 addr;
+}
+
+
+# absolute
+addrmode: "$"^op0031      is mode=7  & reg=15 ; op0031
+{
+	export *[ram]:4 op0031;
+}
+
+addrmode: "*$"^op0031     is mode=14 & reg=15 ; op0031
+{
+	local tmp:4 = op0031;
+	local tmp2:4 = *[ram]:4 tmp;
+	export *[ram]:4 tmp2;
+}
+
+# displacement
+addrmode: imm8(%reg)     is mode=12 & reg ; imm8
+{
+	local tmp:4 = imm8 + reg;
+	export *[ram]:4 tmp;
+}
+
+addrmode: "*"^imm8(%reg) is mode=13 & reg ; imm8
+{
+	local tmp:4 = imm8 + reg;
+	local tmp2:4 = *[ram] tmp;
+	export *[ram]:4 tmp2;
+}
+
+addrmode: imm16(%reg)     is mode=10 & reg ; imm16
+{
+	local tmp:4 = imm16 + reg;
+	export *[ram]:4 tmp;
+}
+
+addrmode: "*"^imm16(%reg) is mode=11 & reg ; imm16
+{
+	local tmp:4 = imm16 + reg;
+	local tmp2:4 = *[ram] tmp;
+	export *[ram]:4 tmp2;
+}
+
+addrmode: imm32(%reg)     is mode=8  & reg ; imm32
+{
+	local tmp:4 = imm32 + reg;
+	export *[ram]:4 tmp;
+}
+
+addrmode: "*"^imm32(%reg) is mode=9  & reg ; imm32
+{
+	local tmp:4 = imm32 + reg;
+	local tmp2:4 = *[ram] tmp;
+	export *[ram]:4 tmp2;
+}
+
+#TODO  so is broken here
+addrmode: so(%ap)          is mode=7  & so & ap
+{
+	local tmp:4 = so;
+	tmp = tmp + ap;
+	export *[ram]:4 tmp;
+}
+
+#TODO  so is broken here
+addrmode: so(%fp)          is mode=6  & so & fp
+{
+	local tmp:4 = so;
+	tmp = tmp + fp;
+	export *[ram]:4 tmp;
+}
+
+# immediate
+addrmode: "&"^imm8         is mode=6  & reg=15 ; imm8
+{
+	local tmp:4 = imm8;
+	export *:4 tmp;
+}
+
+addrmode: "&"^imm16        is mode=5  & reg=15 ; imm16
+{
+	local tmp:4 = imm16;
+	export *:4 tmp;
+}
+
+addrmode: "&"^imm32        is mode=4  & reg=15 ; imm32
+{
+	local tmp:4 = imm32;
+	export *:4 tmp;
+}
+
+#TODO  why is op0407 needed here?
+addrmode: "&"^lit          is mode<4 & op0407 & so [ lit = (op0407 << 4) | so; ]
+{
+	local tmp:4 = lit;
+	export tmp;
+}
+
+addrmode: "&"^lit          is mode=15 & so [ lit = (-1 << 4) | so; ]
+{
+	local tmp:4 = lit;
+	export tmp;
+}
+
+# register
+addrmode: %reg             is mode=4  & reg & op0003<15 { local tmp:4 = reg; export tmp; }
+addrmode: (%reg)           is mode=5  & reg & op0003<15 { local tmp:4 = reg; export tmp; }
+
+#TODO  super broken
+# special
+exaddrmode: "{sbyte}"^addrmode  is extype=7 ; addrmode { local tmp:4 = sext(addrmode:1); export tmp; }
+exaddrmode: "{shalf}"^addrmode  is extype=6 ; addrmode { local tmp:4 = sext(addrmode:2); export tmp; }
+exaddrmode: "{sword}"^addrmode  is extype=4 ; addrmode { local tmp:4 = addrmode:4; export tmp; }
+exaddrmode: "{ubyte}"^addrmode  is extype=3 ; addrmode { local tmp:4 = zext(addrmode:1); export tmp; }
+exaddrmode: "{uhalf}"^addrmode  is extype=2 ; addrmode { local tmp:4 = zext(addrmode:2); export tmp; }
+exaddrmode: "{uword}"^addrmode  is extype=0 ; addrmode { local tmp:4 = addrmode:4; export tmp; }
+
+addrmode: exaddrmode is (mode=14) ... & exaddrmode { local tmp:4 = exaddrmode; export tmp; }
+
+count:  addrmode is addrmode { local tmp:4 = addrmode; export tmp; }
+src:    addrmode is addrmode { local tmp:4 = addrmode; export tmp; }
+src1:   addrmode is addrmode { local tmp:4 = addrmode; export tmp; }
+src2:   addrmode is addrmode { local tmp:4 = addrmode; export tmp; }
+dst:    addrmode is addrmode { local tmp:4 = addrmode; export tmp; }
+width:  addrmode is addrmode { local tmp:4 = addrmode; export tmp; }
+offset: addrmode is addrmode { local tmp:4 = addrmode; export tmp; }
+
+# branch conditions
+CC: "GE"     is op0205=0  { local tmp:1 = (($(Ncc) == 0) | ($(Ccc) == 1)); export tmp; }    # greater than or equal
+CC: "G"      is op0205=1  { local tmp:1 = (($(Ncc) == 0) & ($(Zcc) == 0)); export tmp; } # greater than (signed)
+CC: "L"      is op0205=2  { local tmp:1 = (($(Ncc) == 1) & ($(Zcc) == 0)); export tmp; } # less than
+CC: "LE"     is op0205=3  { local tmp:1 = (($(Ncc) == 1) | ($(Zcc) == 1)); export tmp; } # less than or equal (signed)
+#CC: "CC"     is op0205=4  { local tmp:1 = ($(Ccc) == 0); export tmp; }                   # carry clear
+CC: "GEU"    is op0205=4  { local tmp:1 = ($(Ccc) == 0); export tmp; }                   # greater than or equal (unsigned)
+CC: "GU"     is op0205=5  { local tmp:1 = (($(Ccc) == 0) & ($(Zcc) == 0)); export tmp; } # greater than (unsigned)
+#CC: "CS"     is op0205=6  { local tmp:1 = ($(Ccc) == 1); export tmp; }                   # carry set
+CC: "LU"     is op0205=6  { local tmp:1 = ($(Ccc) == 1); export tmp; }                   # less than (unsigned)
+CC: "LEU"    is op0205=7  { local tmp:1 = (($(Ccc) == 1) | ($(Zcc) == 1)); export tmp; } # less than or equal (unsigned)
+CC: "VC"     is op0205=8  { local tmp:1 = ($(Vcc) == 0); export tmp; }                   # overflow clear
+CC: "NE"     is op0205=9  { local tmp:1 = ($(Zcc) == 0); export tmp; }                   # not equal
+CC: "VS"     is op0205=10 { local tmp:1 = ($(Vcc) == 1); export tmp; }                   # overflow set
+CC: "E"      is op0205=11 { local tmp:1 = ($(Zcc) == 1); export tmp; }                   # equal
+CC: "NE"     is op0205=13 { local tmp:1 = ($(Zcc) == 0); export tmp; }                   # not equal
+CC: ""       is op0205=14 { local tmp:1 = 1; export tmp; }                                # branch
+CC: "E"      is op0205=15 { local tmp:1 = ($(Zcc) == 1); export tmp; }                   # equal
+
+# return conditions
+CC_: "GEQ"   is op0205=0  { local tmp:1 = (($(Ncc) == 0) | ($(Ccc) == 1)); export tmp; }    # greater than or equal (signed)
+CC_: "GTR"   is op0205=1  { local tmp:1 = (($(Ncc) == 0) & ($(Zcc) == 0)); export tmp; } # greater than (signed)
+CC_: "LSS"   is op0205=2  { local tmp:1 = (($(Ncc) == 1) & ($(Zcc) == 0)); export tmp; } # less than
+CC_: "LEQ"   is op0205=3  { local tmp:1 = (($(Ncc) == 1) | ($(Zcc) == 1)); export tmp; } # less than or equal (signed)
+#CC_: "CC"    is op0205=4  { local tmp:1 = ($(Ccc) == 0); export tmp; }                   # carry clear
+CC_: "GEQU"  is op0205=4  { local tmp:1 = ($(Ccc) == 0); export tmp; }                   # greater than or equal (unsigned)
+CC_: "GTRU"  is op0205=5  { local tmp:1 = (($(Ccc) == 0) & ($(Zcc) == 0)); export tmp; } # greater than (unsigned)
+#CC_: "CS"    is op0205=6  { local tmp:1 = ($(Ccc) == 1); export tmp; }                   # carry set
+CC_: "LSSU"  is op0205=6  { local tmp:1 = ($(Ccc) == 1); export tmp; }                   # less than (unsigned)
+CC_: "LEQU"  is op0205=7  { local tmp:1 = (($(Ccc) == 1) | ($(Zcc) == 1)); export tmp; } # less than or equal (unsigned)
+CC_: "VC"    is op0205=8  { local tmp:1 = ($(Vcc) == 0); export tmp; }                   # overflow clear
+CC_: "NEQU"  is op0205=9  { local tmp:1 = ($(Zcc) == 0); export tmp; }                   # not equal (unsigned)
+CC_: "VS"    is op0205=10 { local tmp:1 = ($(Vcc) == 1); export tmp; }                   # overflow set
+CC_: "EQLU"  is op0205=11 { local tmp:1 = ($(Zcc) == 1); export tmp; }                   # equal (unsigned)
+CC_: "NEQ"   is op0205=13 { local tmp:1 = ($(Zcc) == 0); export tmp; }                   # not equal (signed)
+CC_: "SB"    is op0205=14 { local tmp:1 = 1; export tmp; }                                # return (unconditional)
+CC_: "EQL"   is op0205=15 { local tmp:1 = ($(Zcc) == 1); export tmp; }                   # equal (signed)
+
+
+
+:ADDB2 src,dst        is op=0x9f ; src ; dst
+{
+	local tmp:4 = zext(src:1 + dst:1);
+	dst = tmp;
+	cond_case_2(dst);
+}
+
+:ADDB3 src1,src2,dst  is op=0xdf ; src1 ; src2 ; dst
+{
+	local tmp:4 = zext(src1:1 + src2:1);
+	dst = tmp;
+	cond_case_2(dst);
+}
+
+:ADDH2 src,dst        is op=0x9e ; src ; dst
+{
+	local tmp:4 = zext(src:2 + dst:2);
+	dst = tmp;
+	cond_case_2(dst);
+}
+
+:ADDH3 src1,src2,dst  is op=0xde ; src1 ; src2 ; dst
+{
+	local tmp:4 = zext(src1:1 + src2:1);
+	dst = tmp;
+	cond_case_2(dst);
+}
+
+:ADDW2 src,dst        is op=0x9c ; src ; dst
+{
+	local tmp:4 = src + dst;
+	dst = tmp;
+	cond_case_2(dst);
+}
+
+:ADDW3 src1,src2,dst  is op=0xdc ; src1 ; src2 ; dst
+{
+	local tmp:4 = src1 + src2;
+	dst = tmp;
+	cond_case_2(dst);
+}
+
+:ALSW3 count,src,dst  is op=0xc0 ; count ; src ; dst
+{
+	local tmp:4 = src << (count & 0x1f);
+	dst = tmp;
+	cond_case_5(dst);
+}
+
+:ANDB2 src,dst        is op=0xbb ; src ; dst
+{
+	local tmp:4 = zext(src:1);
+	tmp = tmp & zext(dst:1);
+	dst = tmp;
+	cond_case_1(tmp);
+}
+
+:ANDB3 src1,src2,dst  is op=0xfb ; src1 ; src2 ; dst
+{
+	local tmp:4 = zext(src1:1 & src2:1);
+	dst = tmp;
+	cond_case_1(dst);
+}
+
+:ANDH2 src,dst        is op=0xba ; src ; dst
+{
+	local tmp:4 = zext(src:2 & dst:2);
+	dst = tmp;
+	cond_case_1(dst);
+}
+
+:ANDH3 src1,src2,dst  is op=0xfa ; src1 ; src2 ; dst
+{
+	local tmp:4 = zext(src1:2 & src2:2);
+	dst = tmp;
+	cond_case_1(dst);
+}
+
+:ANDW2 src,dst        is op=0xb8 ; src ; dst
+{
+	local tmp:4 = src & dst;
+	dst = tmp;
+	cond_case_1(dst);
+}
+
+:ANDW3 src1,src2,dst  is op=0xf8 ; src1 ; src2 ; dst
+{
+	local tmp:4 = src1 & src2;
+	dst = tmp;
+	cond_case_1(dst);
+}
+
+:ARSB3 count,src,dst  is op=0xc7 ; count ; src ; dst
+{
+	local tmp:4 = sext(src:1 s>> (count & 0x1f));
+	dst = tmp;
+	cond_case_3(dst);
+}
+
+:ARSH3 count,src,dst  is op=0xc6 ; count ; src ; dst
+{
+	local tmp:4 = sext(src:2 s>> (count & 0x1f));
+	dst = tmp;
+	cond_case_3(dst);
+}
+
+:ARSW3 count,src,dst  is op=0xc4 ; count ; src ; dst
+{
+	local tmp:4 = src s>> (count & 0x1f);
+	dst = tmp;
+	cond_case_3(dst);
+}
+
+
+# :BCCB  0x53
+# :BCCH  0x52
+# :BCSB  0x5b
+# :BCSH  0x5a
+# :BEB   0x6f
+# :BEB   0x7f
+# :BEH   0x6e
+# :BEH   0x7e
+# :BGB   0x47
+# :BGEB  0x43
+# :BGEH  0x42
+# :BGEUB 0x53
+# :BGEUH 0x52
+# :BGH   0x46
+# :BGUB  0x57
+# :BGUH  0x56
+# :BLB   0x4b
+# :BLEB  0x4f
+# :BLEH  0x4e
+# :BLEUB 0x5f
+# :BLEUH 0x5e
+# :BLH   0x4a
+# :BLUB  0x5b
+# :BLUH  0x5a
+# :BNEB  0x67
+# :BNEB  0x77
+# :BNEH  0x66
+# :BNEH  0x76
+# :BRB   0x7b
+# :BRH   0x7a
+# :BVCB  0x63
+# :BVCH  0x62
+# :BVSB  0x6b
+# :BVSH  0x6a
+:B^CC^"B" disp8 is op0607=1 & op0101=1 & op0000=1 & CC ; disp8
+{
+	if (CC != 0) goto disp8;
+}
+
+:B^CC^"H" disp16 is op0607=1 & op0101=1 & op0000=0 & CC ; disp16
+{
+	if (CC != 0) goto disp16;
+}
+
+:BITB src1,src2   is op=0x3b ; src1 ; src2
+{
+	local tmp:4 = zext(src1:1 & src2:1);
+	cond_case_1(tmp);
+}
+
+:BITH src1,src2   is op=0x3a ; src1 ; src2
+{
+	local tmp:4 = zext(src1:2 & src2:2);
+	cond_case_1(tmp);
+}
+
+:BITW src1,src2   is op=0x38 ; src1 ; src2
+{
+	local tmp:4 = src1 & src2;
+	cond_case_1(tmp);
+}
+
+define pcodeop breakpoint;
+:BPT     is op=0x2e
+{
+	breakpoint();
+}
+
+:BSBB disp8   is op=0x37 ; disp8
+{
+	local tmp:4 = inst_next;
+	*[ram]:4 sp = tmp;
+	sp = sp + 4;
+	call disp8;
+}
+
+:BSBH disp16   is op=0x36 ; disp16
+{
+	local tmp:4 = inst_next;
+	*[ram]:4 sp = tmp;
+	sp = sp + 4;
+	call disp16;
+}
+
+:CALL src,dst    is op=0x2c ; src ; dst
+{
+	local tempa:4 = src;
+	local tempb:4 = dst;
+	*[ram]:4 sp = ap;
+	sp = sp + 4;
+	*[ram]:4 sp = inst_next;
+	sp = sp + 4;
+	ap = tempa;
+	call [tempb];
+}
+
+define pcodeop cflush;
+:CFLUSH  is op=0x27
+{
+	cflush();
+}
+
+:CLRB dst   is op=0x83 ; dst
+{
+	dst = 0;
+	cond_case_2(dst);
+}
+
+:CLRH dst   is op=0x82 ; dst
+{
+	dst = 0;
+	cond_case_2(dst);
+}
+
+:CLRW dst   is op=0x80 ; dst
+{
+	dst = 0;
+	cond_case_2(dst);
+}
+
+:CMPB src1,src2   is op=0x3f ; src1 ; src2
+{
+	local tmp:4 = zext(src2:1 - src1:1);
+	cond_case_2(tmp);
+}
+
+:CMPH src1,src2   is op=0x3e ; src1 ; src2
+{
+	local tmp:4 = zext(src2:2 - src1:2);
+	cond_case_2(tmp);
+}
+
+:CMPW src1,src2   is op=0x3c ; src1 ; src2
+{
+	local tmp:4 = src2 - src1;
+	cond_case_2(tmp);
+}
+
+:DECB dst   is op=0x97 ; dst
+{
+	local tmp:4 = zext(dst:1 - 1);
+	dst = tmp;
+	cond_case_2(dst);
+}
+
+:DECH dst   is op=0x96 ; dst
+{
+	local tmp:4 = zext(dst:2 - 1);
+	dst = tmp;
+	cond_case_2(dst);
+}
+
+:DECW dst   is op=0x94 ; dst
+{
+	local tmp:4 = dst - 1;
+	dst = tmp;
+	cond_case_2(dst);
+}
+
+:DIVB2 src,dst  is op=0xaf ; src ; dst
+{
+	local tmp:4 = zext(dst:1 / src:1);
+	dst = tmp;
+	cond_case_3(dst);
+}
+
+:DIVB3 src1,src2,dst  is op=0xef ; src1 ; src2 ; dst
+{
+	local tmp:4 = zext(src2:1 / src1:1);
+	dst = tmp;
+	cond_case_4(dst);
+}
+
+:DIVH2 src,dst  is op=0xae ; src ; dst
+{
+	local tmp:4 = zext(dst:2 / src:2);
+	dst = tmp;
+	cond_case_3(dst);
+}
+
+:DIVH3 src1,src2,dst  is op=0xee ; src1 ; src2 ; dst
+{
+	local tmp:4 = zext(src2:2 / src1:2);
+	dst = tmp;
+	cond_case_4(dst);
+}
+
+:DIVW2 src,dst  is op=0xac ; src ; dst
+{
+	local tmp:4 = dst / src;
+	dst = tmp;
+	cond_case_3(dst);
+}
+
+:DIVW3 src1,src2,dst  is op=0xec ; src1 ; src2 ; dst
+{
+	local tmp:4 = src2 / src1;
+	dst = tmp;
+	cond_case_4(dst);
+}
+
+:EXTFB width,offset,src,dst  is op=0xcf ; width ; offset ; src ; dst
+{
+	local tmp:4 = zext(((1 << width) - 1) & (src:1 >> offset));
+	dst = tmp;
+	cond_case_1(dst);
+}
+
+:EXTFH width,offset,src,dst  is op=0xce ; width ; offset ; src ; dst
+{
+	local tmp:4 = zext(((1 << width) - 1) & (src:2 >> offset));
+	dst = tmp;
+	cond_case_1(dst);
+}
+
+:EXTFW width,offset,src,dst  is op=0xcc ; width ; offset ; src ; dst
+{
+	local tmp:4 = ((1 << width) - 1) & (src >> offset);
+	dst = tmp;
+	cond_case_1(dst);
+}
+
+define pcodeop extop;
+:EXTOP   is op=0x14
+{
+	extop();
+}
+
+:INCB dst   is op=0x93 ; dst
+{
+	local tmp:4 = zext(dst:1 + 1);
+	dst = tmp;
+	cond_case_2(dst);
+}
+
+:INCH dst   is op=0x92 ; dst
+{
+	local tmp:4 = zext(dst:2 + 1);
+	dst = tmp;
+	cond_case_2(dst);
+}
+
+:INCW dst   is op=0x90 ; dst
+{
+	local tmp:4 = dst + 1;
+	dst = tmp;
+	cond_case_2(dst);
+}
+
+:INSFB width,offset,src,dst  is op=0xcb ; width ; offset ; src ; dst
+{
+	local tmp:4 = zext((~(((1 << width) - 1) << offset)) & dst:1);
+	local tmp2:4 = zext((((1 << width) - 1) << offset) & src:1);
+	local tmp3:4 = tmp | tmp2;
+	dst = tmp3;
+}
+
+:INSFH width,offset,src,dst  is op=0xca ; width ; offset ; src ; dst
+{
+	local tmp:4 = zext((~(((1 << width) - 1) << offset)) & dst:2);
+	local tmp2:4 = zext((((1 << width) - 1) << offset) & src:2);
+	local tmp3:4 = tmp | tmp2;
+	dst = tmp3;
+}
+
+:INSFW width,offset,src,dst  is op=0xc8 ; width ; offset ; src ; dst
+{
+	local tmp:4 = (~(((1 << width) - 1) << offset)) & dst;
+	local tmp2:4 = (((1 << width) - 1) << offset) & src;
+	local tmp3:4 = tmp | tmp2;
+	dst = tmp3;
+}
+
+:JMP dst    is op=0x24 ; dst
+{
+	goto [dst];
+}
+
+:JSB dst    is op=0x34 ; dst
+{
+	local tmp:4 = inst_next;
+	*[ram]:4 sp = tmp;
+	sp = sp + 4;
+	call [dst];
+}
+
+:LLSB3 count,src,dst  is op=0xd3 ; count ; src; dst
+{
+	local tmp:4 = zext(src:1 << (count & 0x1f));
+	dst = tmp;
+	cond_case_1(dst);
+}
+
+:LLSH3 count,src,dst  is op=0xd2 ; count ; src; dst
+{
+	local tmp:4 = zext(src:2 << (count & 0x1f));
+	dst = tmp;
+	cond_case_1(dst);
+}
+
+:LLSW3 count,src,dst  is op=0xd0 ; count ; src; dst
+{
+	local tmp:4 = src << (count & 0x1f);
+	dst = tmp;
+	cond_case_1(dst);
+}
+
+:LRSW3 count,src,dst  is op=0xd4 ; count ; src; dst
+{
+	local tmp:4 = src >> (count & 0x1f);
+	dst = tmp;
+	cond_case_1(dst);
+}
+
+:MCOMB src,dst  is op=0x8b ; src ; dst
+{
+	local tmp:4 = zext(~src:1);
+	dst = tmp;
+	cond_case_1(dst);
+}
+
+:MCOMH src,dst  is op=0x8a ; src ; dst
+{
+	local tmp:4 = zext(~src:2);
+	dst = tmp;
+	cond_case_1(dst);
+}
+
+:MCOMW src,dst  is op=0x88 ; src ; dst
+{
+	local tmp:4 = ~src;
+	dst = tmp;
+	cond_case_1(dst);
+}
+
+:MNEGB src,dst  is op=0x8f ; src ; dst
+{
+	local tmp:4 = zext(-src:1);
+	dst = tmp;
+	cond_case_2(dst);
+}
+
+:MNEGH src,dst  is op=0x8e ; src ; dst
+{
+	local tmp:4 = zext(-src:2);
+	dst = tmp;
+	cond_case_2(dst);
+}
+
+:MNEGW src,dst  is op=0x8c ; src ; dst
+{
+	local tmp:4 = -src;
+	dst = tmp;
+	cond_case_2(dst);
+}
+
+:MODB2 src,dst  is op=0xa7 ; src ; dst
+{
+	local tmp:4 = zext(dst:1 % src:1);
+	dst = tmp;
+}
+
+:MODB3 src1,src2,dst  is op=0xe7 ; src1 ; src2 ; dst
+{
+	local tmp:4 = zext(src2:1 % src1:1);
+	dst = tmp;
+}
+
+:MODH2 src,dst  is op=0xa6 ; src ; dst
+{
+	local tmp:4 = zext(dst:2 % src:2);
+	dst = tmp;
+}
+
+:MODH3 src1,src2,dst  is op=0xe6 ; src1 ; src2 ; dst
+{
+	local tmp:4 = zext(src2:2 % src1:2);
+	dst = tmp;
+}
+
+:MODW2 src,dst  is op=0xa4 ; src ; dst
+{
+	local tmp:4 = dst % src;
+	dst = tmp;
+}
+
+:MODW3 src1,src2,dst  is op=0xe4 ; src1 ; src2 ; dst
+{
+	local tmp:4 = src2 % src1;
+	dst = tmp;
+}
+
+:MOVAW src,dst  is op=0x04; src ; dst
+{
+	local tmp:4 = src;
+	dst = tmp;
+	cond_case_1(dst);
+}
+
+:MOVB src,dst   is op=0x87 ; src ; dst
+{
+	local tmp:4 = zext(src:1);
+	dst = tmp;
+	cond_case_1(dst);
+}
+
+:MOVBLW  is op=0x30 ; op0007=0x19
+{
+    <start>
+	if (r2 == 0) goto inst_next;
+	*[ram]:4 r1 = *[ram]:4 r0;
+	r1 = r1 + 1;
+	r0 = r0 + 1;
+	r2 = r2 - 1;
+	goto <start>;
+}
+
+:MOVH src,dst   is op=0x86 ; src ; dst
+{
+	local tmp:4 = zext(src:2);
+	dst = tmp;
+	cond_case_1(dst);
+}
+
+:MOVW src,dst   is op=0x84 ; src ; dst
+{
+	local tmp:4 = src;
+	dst = tmp;
+}
+
+:MULB2 src,dst  is op=0xab ; src ; dst
+{
+	local tmp:4 = zext(dst:1 * src:1);
+	dst = tmp;
+	cond_case_3(dst);
+}
+
+:MULB3 src1,src2,dst  is op=0xeb ; src1 ; src2 ; dst
+{
+	local tmp:4 = zext(src2:1 * src1:1);
+	dst = tmp;
+	cond_case_4(dst);
+}
+
+:MULH2 src,dst  is op=0xaa ; src ; dst
+{
+	local tmp:4 = zext(dst:2 * src:2);
+	dst = tmp;
+	cond_case_3(dst);
+}
+
+:MULH3 src1,src2,dst  is op=0xea ; src1 ; src2 ; dst
+{
+	local tmp:4 = zext(src2:2 * src1:2);
+	dst = tmp;
+	cond_case_4(dst);
+}
+
+:MULW2 src,dst  is op=0xa8 ; src ; dst
+{
+	local tmp:4 = dst * src;
+	dst = tmp;
+	cond_case_3(dst);
+}
+
+:MULW3 src1,src2,dst  is op=0xe8 ; src1 ; src2 ; dst
+{
+	local tmp:4 = src2 * src1;
+	dst = tmp;
+	cond_case_4(dst);
+}
+
+define pcodeop verno;
+:MVERNO  is op=0x30 ; op0007=0x09
+{
+	r0 = verno();
+}
+
+:NOP     is op=0x70
+{
+	local __nop:1 = 0;
+	__nop = __nop;
+}
+
+:NOP2    is op=0x73 ; op0007
+{
+	local __nop:1 = 0;
+	__nop = __nop;
+}
+
+:NOP3    is op=0x72 ; op0015
+{
+	local __nop:1 = 0;
+	__nop = __nop;
+}
+
+:ORB2 src,dst   is op=0xb3 ; src ; dst
+{
+	local tmp:4 = zext(dst:1 | src:1);
+	dst = tmp;
+	cond_case_1(dst);
+}
+
+:ORB3 src1,src2,dst   is op=0xf3 ; src1 ; src2 ; dst
+{
+	local tmp:4 = zext(src1:1 | src2:1);
+	dst = tmp;
+	cond_case_1(dst);
+}
+
+:ORH2 src,dst   is op=0xb2 ; src ; dst
+{
+	local tmp:4 = zext(dst:2 | src:2);
+	dst = tmp;
+	cond_case_1(dst);
+}
+
+:ORH3 src1,src2,dst   is op=0xf2 ; src1 ; src2 ; dst
+{
+	local tmp:4 = zext(src1:2 | src2:2);
+	dst = tmp;
+	cond_case_1(dst);
+}
+
+:ORW2 src,dst   is op=0xb0 ; src ; dst
+{
+	local tmp:4 = dst | src;
+	dst = tmp;
+	cond_case_1(dst);
+}
+
+:ORW3 src1,src2,dst   is op=0xf0 ; src1 ; src2 ; dst
+{
+	local tmp:4 = src1 | src2;
+	dst = tmp;
+	cond_case_1(dst);
+}
+
+:POPW dst   is op=0x20 ; dst
+{
+	sp = sp - 4;
+	dst = *[ram]:4 sp;
+}
+
+:PUSHAW src is op=0xe0 ; src
+{
+	*[ram]:4 sp = src;
+	sp = sp + 4;
+}
+
+:PUSHW src  is op=0xa0 ; src
+{
+	*[ram]:4 sp = src;
+	sp = sp + 4;
+}
+
+# :RCC   0x50
+# :RCS   0x58
+# :REQLU 0x6c
+# :REQL  0x7c
+# :RGEQ  0x40
+# :RGEQU 0x50
+# :RGTR  0x44
+# :RGTRU 0x54
+# :RLEQ  0x4c
+# :RLEQU 0x5c
+# :RLSS  0x48
+# :RLSSU 0x58
+# :RNEQU 0x64
+# :RNEQ  0x74
+# :RSB   0x78
+# :RVC   0x60
+# :RVS   0x68
+:R^CC_ is op0607=1 & op0101=0 & op0000=0 & CC_
+{
+	if (CC_ == 0) goto inst_next;
+	sp = sp - 4;
+	local tmp:4 = *[ram]:4 sp;
+	return [tmp];
+}
+
+#TODO  this will need improvement, see SAVE
+:RESTORE reg is op=0x18 ; (mode=4|mode=5) & op0003 & reg
+{
+	local tempa:4 = fp - 28;
+	local tempb:4 = *[ram]:4 tempa;
+	local tempc:4 = fp - 24;
+	fp = tempb;
+	sp = tempa;
+	local tmp:1 = op0003;
+	local tmp2:4 = 0;
+    <start>
+	if (tmp >= 9) goto inst_next;
+	*[register]:4 (&reg + tmp2) = *[ram]:4 tempc;
+	tempc = tempc + 4;
+	tmp = tmp + 1;
+	tmp2 = tmp2 + 4;
+	goto <start>;
+}
+
+:RET     is op=0x08
+{
+	local tempa = ap;
+	local tempb = *[ram]:4 (sp - 4);
+	local tempc = *[ram]:4 (sp - 8);
+	ap = tempb;
+	sp = tempa;
+	goto [tempc];
+}
+
+:ROTW count,src,dst   is op=0xd8 ; count ; src; dst
+{
+	local tmp:4 = (src << count) | (src >> (32 - count));
+	dst = tmp;
+	cond_case_1(dst);
+}
+
+#TODO  this will need improvement, see RESTORE
+:SAVE reg   is op=0x10 ; (mode=4|mode=5) & reg & op0003
+{
+	local temp:4 = sp;
+	*[ram]:4 temp = fp;
+	temp = temp + 4;
+	sp = sp + 28;
+	fp = sp;
+	local tmp:1 = op0003;
+	local tmp2:4 = 0;
+    <start>
+	if (tmp >= 9) goto inst_next;
+	*[ram]:4 temp = *[register]:4 (&reg + tmp2);
+	tmp = tmp + 1;
+	tmp2 = tmp2 + 4;
+	goto <start>;
+}
+
+#TODO  this could be improved, but not much gain
+define pcodeop coproc_read;
+define pcodeop coproc_write;
+:SPOP op0031   is op=0x32 ; op0031
+{
+	local tmp:4 = op0031;
+	psw = coproc_write(tmp);
+}
+
+:SPOPRS op0031,src is op=0x22 ; op0031 ; src
+{
+	local tmp:4 = op0031;
+	local tmp2:1 = 1;
+	coproc_write(tmp);
+	psw = coproc_read(tmp2, src);
+}
+
+:SPOPRD op0031,src is op=0x02 ; op0031 ; src
+{
+	local tmp:4 = op0031;
+	local tmp2:1 = 2;
+	coproc_write(tmp);
+	psw = coproc_read(tmp2, src);
+}
+
+:SPOPRT op0031,src is op=0x06 ; op0031 ; src
+{
+	local tmp:4 = op0031;
+	local tmp2:1 = 3;
+	coproc_write(tmp);
+	psw = coproc_read(tmp2, src);
+}
+
+:SPOPS2 op0031,src,dst is op=0x23 ; op0031 ; src ; dst
+{
+	local tmp:4 = op0031;
+	local tmp2:1 = 1;
+	dst = coproc_write(tmp);
+	psw = coproc_read(tmp2, src);
+}
+
+:SPOPD2 op0031,src,dst is op=0x03 ; op0031 ; src ; dst
+{
+	local tmp:4 = op0031;
+	local tmp2:1 = 2;
+	dst = coproc_write(tmp);
+	psw = coproc_read(tmp2, src);
+}
+
+:SPOPT2 op0031,src,dst is op=0x07 ; op0031 ; src ; dst
+{
+	local tmp:4 = op0031;
+	local tmp2:1 = 3;
+	dst = coproc_write(tmp);
+	psw = coproc_read(tmp2, src);
+}
+
+:SPOPWS op0031,dst is op=0x33 ; op0031 ; dst
+{
+	local tmp:4 = op0031;
+	local tmp2:1 = 1;
+	psw = coproc_write(tmp);
+	coproc_write(tmp2, dst);
+}
+
+:SPOPWD op0031,dst is op=0x31 ; op0031 ; dst
+{
+	local tmp:4 = op0031;
+	local tmp2:1 = 2;
+	psw = coproc_write(tmp);
+	coproc_write(tmp2, dst);
+}
+
+:SPOPWT op0031,dst is op=0x17 ; op0031 ; dst
+{
+	local tmp:4 = op0031;
+	local tmp2:1 = 3;
+	psw = coproc_write(tmp);
+	coproc_write(tmp2, dst);
+}
+
+:STRCPY  is op=0x30 ; op0007=0x35
+{
+    <start>
+	*[ram]:1 r1 = *[ram]:1 r0;
+	if ((*[ram]:1 r1) == 0) goto inst_next;
+	r1 = r1 + 1;
+	r0 = r0 + 1;
+	goto <start>;
+}
+
+:STREND  is op=0x30 ; op0007=0x1f
+{
+    <start>
+	if ((*[ram]:1 r0) == 0) goto inst_next;
+	r0 = r0 + 1;
+	goto <start>;	
+}
+
+:SUBB2 src,dst  is op=0xbf ; src ; dst
+{
+	local tmp:4 = zext(dst:1 - src:1);
+	dst = tmp;
+	cond_case_2(dst);
+}
+
+:SUBB3 src1,src2,dst  is op=0xff ; src1 ; src2 ; dst
+{
+	local tmp:4 = zext(src2:1 - src1:1);
+	dst = tmp;
+	cond_case_2(dst);
+}
+
+:SUBH2 src,dst  is op=0xbe ; src ; dst
+{
+	local tmp:4 = zext(dst:2 - src:2);
+	dst = tmp;
+	cond_case_2(dst);
+}
+
+:SUBH3 src1,src2,dst  is op=0xfe ; src1 ; src2 ; dst
+{
+	local tmp:4 = zext(src2:2 - src1:2);
+	dst = tmp;
+	cond_case_2(dst);
+}
+
+:SUBW2 src,dst  is op=0xbc ; src ; dst
+{
+	local tmp:4 = dst - src;
+	dst = tmp;
+	cond_case_2(dst);
+}
+
+:SUBW3 src1,src2,dst  is op=0xfc ; src1 ; src2 ; dst
+{
+	local tmp:4 = src2 - src1;
+	dst = tmp;
+	cond_case_2(dst);
+}
+
+:SWAPBI dst  is op=0x1f ; dst
+{
+	local tempa:4 = zext(dst:1);
+	dst = zext(r0:1);
+	cond_case_1(dst);
+	r0 = tempa;
+}
+
+:SWAPHI dst is op=0x1e ; dst
+{
+	local tempa:4 = zext(dst:2);
+	dst = zext(r0:2);
+	cond_case_1(dst);
+	r0 = tempa;
+}
+
+:SWAPWI dst is op=0x1c ; dst
+{
+	local tempa:4 = dst;
+	dst = r0;
+	cond_case_1(dst);
+	r0 = tempa;
+}
+
+:TSTB src   is op=0x2b ; src
+{
+	local tmp:4 = zext(src:1 - 0);
+	cond_case_6(tmp);
+}
+
+:TSTH src   is op=0x2a ; src
+{
+	local tmp:4 = zext(src:2 - 0);
+	cond_case_6(tmp);
+}
+
+:TSTW src   is op=0x28 ; src
+{
+	local tmp:4 = src - 0;
+	cond_case_6(tmp);
+}
+
+:XORB2 src,dst  is op=0xb7 ; src ; dst
+{
+	local tmp:4 = zext(dst:1 ^ src:1);
+	dst = tmp;
+	cond_case_1(dst);
+}
+
+:XORB3 src1,src2,dst  is op=0xf7 ; src1 ; src2 ; dst
+{
+	local tmp:4 = zext(src2:1 ^ src1:1);
+	dst = tmp;
+	cond_case_1(dst);
+}
+
+:XORH2 src,dst  is op=0xb6 ; src ; dst
+{
+	local tmp:4 = zext(dst:2 ^ src:2);
+	dst = tmp;
+	cond_case_1(dst);
+}
+
+:XORH3 src1,src2,dst  is op=0xf6 ; src1 ; src2 ; dst
+{
+	local tmp:4 = zext(src2:2 ^ src1:2);
+	dst = tmp;
+	cond_case_1(dst);
+}
+
+:XORW2 src,dst  is op=0xb4 ; src ; dst
+{
+	local tmp:4 = dst ^ src;
+	dst = tmp;
+	cond_case_1(dst);
+}
+
+:XORW3 src1,src2,dst  is op=0xf4 ; src1 ; src2 ; dst
+{
+	local tmp:4 = src2 ^ src1;
+	dst = tmp;
+	cond_case_1(dst);
+}
