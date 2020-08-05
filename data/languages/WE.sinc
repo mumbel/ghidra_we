@@ -134,52 +134,53 @@ disp16: addr  is imm16 [ addr = inst_start + imm16; ]
 
 
 # absolute
-addrmode: "$"^op0031      is mode=7  & reg=15 ; op0031
+addrmode: "$"^op0031      is mode=7  & op0003=15 ; op0031
 {
-	export *[ram]:4 op0031;
+	local tmp:4 = op0031;
+	export *tmp;
 }
 
-addrmode: "*$"^op0031     is mode=14 & reg=15 ; op0031
+addrmode: "*$"^op0031     is mode=14 & op0003=15 ; op0031
 {
 	local tmp:4 = op0031;
 	local tmp2:4 = *[ram]:4 tmp;
-	export *[ram]:4 tmp2;
+	export *tmp2;
 }
 
 # displacement
-addrmode: imm8(%reg)     is mode=12 & reg ; imm8
+addrmode: imm8(%reg)     is mode=12 & reg & op0003!=11 ; imm8
 {
 	local tmp:4 = imm8 + reg;
 	export *[ram]:4 tmp;
 }
 
-addrmode: "*"^imm8(%reg) is mode=13 & reg ; imm8
+addrmode: "*"^imm8(%reg) is mode=13 & reg & op0003!=11 ; imm8
 {
 	local tmp:4 = imm8 + reg;
 	local tmp2:4 = *[ram] tmp;
 	export *[ram]:4 tmp2;
 }
 
-addrmode: imm16(%reg)     is mode=10 & reg ; imm16
+addrmode: imm16(%reg)     is mode=10 & reg & op0003!=11 ; imm16
 {
 	local tmp:4 = imm16 + reg;
 	export *[ram]:4 tmp;
 }
 
-addrmode: "*"^imm16(%reg) is mode=11 & reg ; imm16
+addrmode: "*"^imm16(%reg) is mode=11 & reg & op0003!=11 ; imm16
 {
 	local tmp:4 = imm16 + reg;
 	local tmp2:4 = *[ram] tmp;
 	export *[ram]:4 tmp2;
 }
 
-addrmode: imm32(%reg)     is mode=8  & reg ; imm32
+addrmode: imm32(%reg)     is mode=8  & reg & op0003!=11 ; imm32
 {
 	local tmp:4 = imm32 + reg;
 	export *[ram]:4 tmp;
 }
 
-addrmode: "*"^imm32(%reg) is mode=9  & reg ; imm32
+addrmode: "*"^imm32(%reg) is mode=9  & reg & op0003!=11 ; imm32
 {
 	local tmp:4 = imm32 + reg;
 	local tmp2:4 = *[ram] tmp;
@@ -187,7 +188,7 @@ addrmode: "*"^imm32(%reg) is mode=9  & reg ; imm32
 }
 
 #TODO  so is broken here
-addrmode: so(%ap)          is mode=7  & so & ap
+addrmode: so(%ap)          is mode=7  & so & ap & op0003<15
 {
 	local tmp:4 = so;
 	tmp = tmp + ap;
@@ -195,7 +196,7 @@ addrmode: so(%ap)          is mode=7  & so & ap
 }
 
 #TODO  so is broken here
-addrmode: so(%fp)          is mode=6  & so & fp
+addrmode: so(%fp)          is mode=6  & so & fp & op0003<15
 {
 	local tmp:4 = so;
 	tmp = tmp + fp;
@@ -203,40 +204,48 @@ addrmode: so(%fp)          is mode=6  & so & fp
 }
 
 # immediate
-addrmode: "&"^imm8         is mode=6  & reg=15 ; imm8
+addrmode: "&"^imm8         is mode=6  & op0003=15 ; imm8
 {
 	local tmp:4 = imm8;
-	export *:4 tmp;
+	export *[const] tmp;
 }
 
-addrmode: "&"^imm16        is mode=5  & reg=15 ; imm16
+addrmode: "&"^imm16        is mode=5  & op0003=15 ; imm16
 {
 	local tmp:4 = imm16;
-	export *:4 tmp;
+	export *[const] tmp;
 }
 
-addrmode: "&"^imm32        is mode=4  & reg=15 ; imm32
+addrmode: "&"^imm32        is mode=4  & op0003=15 ; imm32
 {
 	local tmp:4 = imm32;
-	export *:4 tmp;
+	export *[const] tmp;
 }
 
-#TODO  why is op0407 needed here?
-addrmode: "&"^lit          is mode<4 & op0407 & so [ lit = (op0407 << 4) | so; ]
+addrmode: "&"^lit          is (mode=0|mode=1|mode=2|mode=3) & op0407 & so [ lit = (op0407 << 4) | so; ]
 {
 	local tmp:4 = lit;
-	export tmp;
+	export *[const] tmp;
 }
 
 addrmode: "&"^lit          is mode=15 & so [ lit = (-1 << 4) | so; ]
 {
 	local tmp:4 = lit;
-	export tmp;
+	export *[const] tmp;
 }
 
 # register
-addrmode: %reg             is mode=4  & reg & op0003<15 { local tmp:4 = reg; export tmp; }
-addrmode: (%reg)           is mode=5  & reg & op0003<15 { local tmp:4 = reg; export tmp; }
+addrmode: %reg             is mode=4  & reg & op0003!=15
+{
+	#TODO  looks broken in pcode
+	export reg;
+}
+
+addrmode: (%reg)           is mode=5  & reg & (op0003!=15 & op0003!=11)
+{
+	local tmp:4 = *[ram]:4 reg;
+	export tmp;
+}
 
 #TODO  super broken
 # special
@@ -247,15 +256,15 @@ exaddrmode: "{ubyte}"^addrmode  is extype=3 ; addrmode { local tmp:4 = zext(addr
 exaddrmode: "{uhalf}"^addrmode  is extype=2 ; addrmode { local tmp:4 = zext(addrmode:2); export tmp; }
 exaddrmode: "{uword}"^addrmode  is extype=0 ; addrmode { local tmp:4 = addrmode:4; export tmp; }
 
-addrmode: exaddrmode is (mode=14) ... & exaddrmode { local tmp:4 = exaddrmode; export tmp; }
+addrmode: exaddrmode is (mode=14 & op0003!=15) ... & exaddrmode { local tmp:4 = exaddrmode; export tmp; }
 
-count:  addrmode is addrmode { local tmp:4 = addrmode; export tmp; }
-src:    addrmode is addrmode { local tmp:4 = addrmode; export tmp; }
-src1:   addrmode is addrmode { local tmp:4 = addrmode; export tmp; }
-src2:   addrmode is addrmode { local tmp:4 = addrmode; export tmp; }
-dst:    addrmode is addrmode { local tmp:4 = addrmode; export tmp; }
-width:  addrmode is addrmode { local tmp:4 = addrmode; export tmp; }
-offset: addrmode is addrmode { local tmp:4 = addrmode; export tmp; }
+count:  addrmode is addrmode { export addrmode; }
+src:    addrmode is addrmode { export addrmode; }
+src1:   addrmode is addrmode { export addrmode; }
+src2:   addrmode is addrmode { export addrmode; }
+dst:    addrmode is addrmode { export addrmode; }
+width:  addrmode is addrmode { export addrmode; }
+offset: addrmode is addrmode { export addrmode; }
 
 # branch conditions
 CC: "GE"     is op0205=0  { local tmp:1 = (($(Ncc) == 0) | ($(Ccc) == 1)); export tmp; }    # greater than or equal
@@ -992,23 +1001,31 @@ define pcodeop verno;
 	return [tmp];
 }
 
-#TODO  this will need improvement, see SAVE
-:RESTORE reg is op=0x18 ; (mode=4|mode=5) & op0003 & reg
+restore_r0: r0 is op0003=0 & r0 { r0 = *[ram]:4 sp; sp = sp + 4; }
+restore_r1: r1 is op0003=1 & r1 { r1 = *[ram]:4 sp; sp = sp + 4; }
+restore_r1:    is restore_r0  { build restore_r0; r1 = *[ram]:4 sp; sp = sp + 4; }
+restore_r2: r2 is op0003=2 & r2 { r2 = *[ram]:4 sp; sp = sp + 4; }
+restore_r2:    is restore_r1  { build restore_r1; r2 = *[ram]:4 sp; sp = sp + 4; }
+restore_r3: r3 is op0003=3 & r3 { r3 = *[ram]:4 sp; sp = sp + 4; }
+restore_r3:    is restore_r2  { build restore_r2; r3 = *[ram]:4 sp; sp = sp + 4; }
+restore_r4: r4 is op0003=4 & r4 { r4 = *[ram]:4 sp; sp = sp + 4; }
+restore_r4:    is restore_r3  { build restore_r3; r4 = *[ram]:4 sp; sp = sp + 4; }
+restore_r5: r5 is op0003=5 & r5 { r5 = *[ram]:4 sp; sp = sp + 4; }
+restore_r5:    is restore_r4  { build restore_r4; r5 = *[ram]:4 sp; sp = sp + 4; }
+restore_r6: r6 is op0003=6 & r6 { r6 = *[ram]:4 sp; sp = sp + 4; }
+restore_r6:    is restore_r5  { build restore_r5; r6 = *[ram]:4 sp; sp = sp + 4; }
+restore_r7: r7 is op0003=7 & r7 { r7 = *[ram]:4 sp; sp = sp + 4; }
+restore_r7:    is restore_r6  { build restore_r6; r7 = *[ram]:4 sp; sp = sp + 4; }
+restore_r8: r8 is op0003=8 & r8 { r8 = *[ram]:4 sp; sp = sp + 4; }
+restore_r8:    is restore_r7  { build restore_r7; r8 = *[ram]:4 sp; sp = sp + 4; }
+restore:    fp is op0003=9 & fp { fp = *[ram]:4 sp; sp = sp + 4; }
+restore:       is restore_r8  { fp = *[ram]:4 sp; sp = sp + 4; build restore_r8; }
+
+:RESTORE %reg is op=0x18 ; (mode=4|mode=5) & reg & restore
 {
-	local tempa:4 = fp - 28;
-	local tempb:4 = *[ram]:4 tempa;
-	local tempc:4 = fp - 24;
-	fp = tempb;
-	sp = tempa;
-	local tmp:1 = op0003;
-	local tmp2:4 = 0;
-    <start>
-	if (tmp >= 9) goto inst_next;
-	*[register]:4 (&reg + tmp2) = *[ram]:4 tempc;
-	tempc = tempc + 4;
-	tmp = tmp + 1;
-	tmp2 = tmp2 + 4;
-	goto <start>;
+	sp = fp - 28;
+	build restore;
+	sp = fp - 28;
 }
 
 :RET     is op=0x08
@@ -1028,22 +1045,33 @@ define pcodeop verno;
 	cond_case_1(dst);
 }
 
-#TODO  this will need improvement, see RESTORE
-:SAVE reg   is op=0x10 ; (mode=4|mode=5) & reg & op0003
+
+save_r0: r0 is op0003=0 & r0 { *[ram]:4 sp = r0; sp = sp + 4; }
+save_r1: r1 is op0003=1 & r1 { *[ram]:4 sp = r1; sp = sp + 4; }
+save_r1:    is save_r0  { build save_r0; *[ram]:4 sp = r1; sp = sp + 4; }
+save_r2: r2 is op0003=2 & r2 { *[ram]:4 sp = r2; sp = sp + 4; }
+save_r2:    is save_r1  { build save_r1; *[ram]:4 sp = r2; sp = sp + 4; }
+save_r3: r3 is op0003=3 & r3 { *[ram]:4 sp = r3; sp = sp + 4; }
+save_r3:    is save_r2  { build save_r2; *[ram]:4 sp = r3; sp = sp + 4; }
+save_r4: r4 is op0003=4 & r4 { *[ram]:4 sp = r4; sp = sp + 4; }
+save_r4:    is save_r3  { build save_r3; *[ram]:4 sp = r4; sp = sp + 4; }
+save_r5: r5 is op0003=5 & r5 { *[ram]:4 sp = r5; sp = sp + 4; }
+save_r5:    is save_r4  { build save_r4; *[ram]:4 sp = r5; sp = sp + 4; }
+save_r6: r6 is op0003=6 & r6 { *[ram]:4 sp = r6; sp = sp + 4; }
+save_r6:    is save_r5  { build save_r5; *[ram]:4 sp = r6; sp = sp + 4; }
+save_r7: r7 is op0003=7 & r7 { *[ram]:4 sp = r7; sp = sp + 4; }
+save_r7:    is save_r6  { build save_r6; *[ram]:4 sp = r7; sp = sp + 4; }
+save_r8: r8 is op0003=8 & r8 { *[ram]:4 sp = r8; sp = sp + 4; }
+save_r8:    is save_r7  { build save_r7; *[ram]:4 sp = r8; sp = sp + 4; }
+save:    fp is op0003=9 & fp { *[ram]:4 sp = fp; sp = sp + 4; }
+save:       is save_r8  { *[ram]:4 sp = fp; sp = sp + 4; build save_r8; }
+
+:SAVE %reg  is op=0x10 ; (mode=4|mode=5) & reg & save
 {
 	local temp:4 = sp;
-	*[ram]:4 temp = fp;
-	temp = temp + 4;
-	sp = sp + 28;
+	build save;
+	sp = temp + 28;
 	fp = sp;
-	local tmp:1 = op0003;
-	local tmp2:4 = 0;
-    <start>
-	if (tmp >= 9) goto inst_next;
-	*[ram]:4 temp = *[register]:4 (&reg + tmp2);
-	tmp = tmp + 1;
-	tmp2 = tmp2 + 4;
-	goto <start>;
 }
 
 #TODO  this could be improved, but not much gain
@@ -1142,7 +1170,7 @@ define pcodeop coproc_write;
     <start>
 	if ((*[ram]:1 r0) == 0) goto inst_next;
 	r0 = r0 + 1;
-	goto <start>;	
+	goto <start>;
 }
 
 :SUBB2 src,dst  is op=0xbf ; src ; dst
