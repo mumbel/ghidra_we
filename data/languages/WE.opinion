@@ -1,0 +1,5 @@
+<opinions>
+	<constraint loader="Common Object File Format (COFF)" compilerSpecID="default">
+		<constraint primary="28673" processor="WE" endian="little" size="32" />
+	</constraint>
+</opinions>
