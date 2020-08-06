@@ -508,9 +508,9 @@ define pcodeop breakpoint;
 {
 	local tempa:4 = src;
 	local tempb:4 = dst;
-	*[ram]:4 sp = ap;
-	sp = sp + 4;
 	*[ram]:4 sp = inst_next;
+	sp = sp + 4;
+	*[ram]:4 sp = ap;
 	sp = sp + 4;
 	ap = tempa;
 	call [tempb];

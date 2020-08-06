@@ -1,0 +1,16 @@
+<patternlist>
+  <patternpairs totalbits="24" postbits="8">
+    <prepatterns>
+      <data>00001000</data> <!-- RET -->
+      <data>00001000 01110000</data> <!-- RET ; NOP -->
+      <data>00001000 01110000 01110000</data> <!-- RET ; NOP ; NOP -->
+    </prepatterns>
+    <postpatterns>
+      <data>00010000 0100....</data> <!-- SAVE -->
+    </postpatterns>
+  </patternpairs>
+  <pattern>
+    <data>00010000 0100.... 10011100 ........ 01001100</data> <!-- SAVE ; ADDW2 ???,%sp -->
+    <funcstart/>
+  </pattern>
+</patternlist>

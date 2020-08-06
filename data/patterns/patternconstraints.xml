@@ -1,0 +1,5 @@
+<patternconstraints>
+  <language id="WE:LE:32:default">
+    <patternfile>32100.xml</patternfile>
+  </language>
+</patternconstraints>
