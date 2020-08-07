@@ -282,7 +282,7 @@ CC: "NE"     is op0205=9  { local tmp:1 = ($(Zcc) == 0); export tmp; }          
 CC: "VS"     is op0205=10 { local tmp:1 = ($(Vcc) == 1); export tmp; }                   # overflow set
 CC: "E"      is op0205=11 { local tmp:1 = ($(Zcc) == 1); export tmp; }                   # equal
 CC: "NE"     is op0205=13 { local tmp:1 = ($(Zcc) == 0); export tmp; }                   # not equal
-CC: ""       is op0205=14 { local tmp:1 = 1; export tmp; }                                # branch
+CC: "R"      is op0205=14 { local tmp:1 = 1; export tmp; }                                # branch
 CC: "E"      is op0205=15 { local tmp:1 = ($(Zcc) == 1); export tmp; }                   # equal
 
 # return conditions
