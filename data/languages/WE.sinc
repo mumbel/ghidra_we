@@ -516,6 +516,12 @@ define pcodeop breakpoint;
 	call [tempb];
 }
 
+define pcodeop process_switch;
+:CALLPS   is op=0x30 ; op0007=0xAC
+{
+	process_switch();
+}
+
 define pcodeop cflush;
 :CFLUSH  is op=0x27
 {
@@ -579,6 +585,13 @@ define pcodeop cflush;
 	cond_case_2(dst);
 }
 
+define pcodeop disable_virtual_pin;
+:DISVJMP  is op=0x30 ; op0007=0x13
+{
+	disable_virtual_pin();
+	goto [r0];
+}
+
 :DIVB2 src,dst  is op=0xaf ; src ; dst
 {
 	local tmp:4 = zext(dst:1 / src:1);
@@ -621,6 +634,13 @@ define pcodeop cflush;
 	cond_case_4(dst);
 }
 
+define pcodeop enable_virtual_pin;
+:ENVBJMP  is op=0x30 ; op0007=0x0D
+{
+	enable_virtual_pin();
+	goto [r0];
+}
+
 :EXTFB width,offset,src,dst  is op=0xcf ; width ; offset ; src ; dst
 {
 	local tmp:4 = zext(((1 << width) - 1) & (src:1 >> offset));
@@ -646,6 +666,13 @@ define pcodeop extop;
 :EXTOP   is op=0x14
 {
 	extop();
+}
+
+define pcodeop gate;
+:GATE  is op=0x30 ; op0007=0x61
+{
+	#TODO  this is system call, can do "syscall" like stuff for it
+	gate();
 }
 
 :INCB dst   is op=0x93 ; dst
@@ -691,6 +718,12 @@ define pcodeop extop;
 	local tmp2:4 = (((1 << width) - 1) << offset) & src;
 	local tmp3:4 = tmp | tmp2;
 	dst = tmp3;
+}
+
+:INTACK dst  is op=0x30 ; op0007=0x2F ; dst
+{
+	local tmp:4 = dst;
+	r0 = tmp << 2;
 }
 
 :JMP dst    is op=0x24 ; dst
@@ -842,6 +875,13 @@ define pcodeop extop;
 	local tmp:4 = zext(src:2);
 	dst = tmp;
 	cond_case_1(dst);
+}
+
+define pcodeop physical_address;
+:MOVTRW src,dst  is op=0x0C ; src ; dst
+{
+	local tmp:4 = physical_address(src);
+	dst = tmp;
 }
 
 :MOVW src,dst   is op=0x84 ; src ; dst
@@ -1036,6 +1076,20 @@ restore:       is restore_r8  { fp = *[ram]:4 sp; sp = sp + 4; build restore_r8;
 	ap = tempb;
 	sp = tempa;
 	goto [tempc];
+}
+
+define pcodeop gate_return;
+:RETG  is op=0x30 ; op0007=0x45
+{
+	gate_return();
+}
+
+define pcodeop process_return;
+:RETPS  is op=0x30 ; op0007=0xC8
+{
+	#TODO  this could have "exit" / no-return type logic built in
+	#      somewhere
+	process_return();
 }
 
 :ROTW count,src,dst   is op=0xd8 ; count ; src; dst
@@ -1255,6 +1309,12 @@ define pcodeop coproc_write;
 {
 	local tmp:4 = src - 0;
 	cond_case_6(tmp);
+}
+
+define pcodeop wait;
+:WAIT  is op=0x2F
+{
+	wait();
 }
 
 :XORB2 src,dst  is op=0xb7 ; src ; dst
