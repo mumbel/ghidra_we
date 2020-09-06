@@ -425,8 +425,17 @@ dstmode: (%reg)           is mode=5  & reg & (op0003!=15 & op0003!=11)
 	local tmp:4 = *[ram]:4 reg;
 	export tmp;
 }
-#TODO  seamode?
-#TODO  deamode?
+#TODO  probably broken
+seamode: (%reg)           is mode=5  & reg & (op0003!=15 & op0003!=11)
+{
+	export reg;
+}
+#TODO  probably broken
+deamode: (%reg)           is mode=5  & reg & (op0003!=15 & op0003!=11)
+{
+	export reg;
+}
+
 
 #TODO  super broken
 # special
@@ -449,7 +458,6 @@ exdst: "{uword}"^dstmode  is extype=0 ; dstmode { local tmp:4 = dstmode:4; expor
 dstmode: exdst is (mode=14 & op0003!=15) ... & exdst { local tmp:4 = exdst; export tmp; }
 
 
-srcea:  seamode is seamode { export seamode; }
 src:    srcmode is srcmode { export srcmode; }
 src1:   srcmode is srcmode { export srcmode; }
 src2:   srcmode is srcmode { export srcmode; }
@@ -458,7 +466,6 @@ offset: srcmode is srcmode { export srcmode; }
 count:  srcmode is srcmode { export srcmode; }
 
 dst:    dstmode is dstmode { export dstmode; }
-dstea:  deamode is deamode { export deamode; }
 
 
 # branch conditions
@@ -699,10 +706,10 @@ define pcodeop breakpoint;
 	call disp16;
 }
 
-:CALL srcea,dstea    is op=0x2c ; srcea ; dstea
+:CALL seamode,deamode    is op=0x2c ; seamode ; deamode
 {
-	local tempa:4 = srcea;
-	local tempb:4 = dstea;
+	local tempa:4 = seamode;
+	local tempb:4 = deamode;
 	*[ram]:4 sp = inst_next;
 	sp = sp + 4;
 	*[ram]:4 sp = ap;
@@ -1199,9 +1206,9 @@ define pcodeop verno;
 	dst = *[ram]:4 sp;
 }
 
-:PUSHAW srcea is op=0xe0 ; srcea
+:PUSHAW seamode is op=0xe0 ; seamode
 {
-	*[ram]:4 sp = srcea;
+	*[ram]:4 sp = seamode;
 	sp = sp + 4;
 }
 
