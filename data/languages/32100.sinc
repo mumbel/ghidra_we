@@ -134,114 +134,236 @@ disp16: addr  is imm16 [ addr = inst_start + imm16; ]
 
 
 # absolute
-addrmode: "$"^op0031      is mode=7  & op0003=15 ; op0031
+srcmode: "$"^op0031      is mode=7  & op0003=15 ; op0031
 {
 	local tmp:4 = op0031;
 	export *tmp;
 }
+dstmode: "$"^op0031      is mode=7  & op0003=15 ; op0031
+{
+	local tmp:4 = op0031;
+	export *tmp;
+}
+seamode: "$"^op0031      is mode=7  & op0003=15 ; op0031
+{
+	local tmp:4 = op0031;
+	export tmp;
+}
 
-addrmode: "*$"^op0031     is mode=14 & op0003=15 ; op0031
+srcmode: "*$"^op0031     is mode=14 & op0003=15 ; op0031
 {
 	local tmp:4 = op0031;
 	local tmp2:4 = *[ram]:4 tmp;
 	export *tmp2;
 }
+dstmode: "*$"^op0031     is mode=14 & op0003=15 ; op0031
+{
+	local tmp:4 = op0031;
+	local tmp2:4 = *[ram]:4 tmp;
+	export *tmp2;
+}
+seamode: "*$"^op0031     is mode=14 & op0003=15 ; op0031
+{
+	local tmp:4 = op0031;
+	local tmp2:4 = *[ram]:4 tmp;
+	export tmp2;
+}
 
 # displacement
-addrmode: imm8(%reg)     is mode=12 & reg & op0003!=11 ; imm8
+srcmode: imm8(%reg)     is mode=12 & reg & op0003!=11 ; imm8
 {
 	local tmp:4 = imm8 + reg;
 	export *[ram]:4 tmp;
 }
+dstmode: imm8(%reg)     is mode=12 & reg & op0003!=11 ; imm8
+{
+	local tmp:4 = imm8 + reg;
+	export *[ram]:4 tmp;
+}
+seamode: imm8(%reg)     is mode=12 & reg & op0003!=11 ; imm8
+{
+	local tmp:4 = imm8 + reg;
+	export tmp;
+}
 
-addrmode: "*"^imm8(%reg) is mode=13 & reg & op0003!=11 ; imm8
+srcmode: "*"^imm8(%reg) is mode=13 & reg & op0003!=11 ; imm8
 {
 	local tmp:4 = imm8 + reg;
 	local tmp2:4 = *[ram] tmp;
 	export *[ram]:4 tmp2;
 }
+dstmode: "*"^imm8(%reg) is mode=13 & reg & op0003!=11 ; imm8
+{
+	local tmp:4 = imm8 + reg;
+	local tmp2:4 = *[ram] tmp;
+	export *[ram]:4 tmp2;
+}
+seamode: "*"^imm8(%reg) is mode=13 & reg & op0003!=11 ; imm8
+{
+	local tmp:4 = imm8 + reg;
+	local tmp2:4 = *[ram] tmp;
+	export tmp2;
+}
 
-addrmode: imm16(%reg)     is mode=10 & reg & op0003!=11 ; imm16
+srcmode: imm16(%reg)     is mode=10 & reg & op0003!=11 ; imm16
 {
 	local tmp:4 = imm16 + reg;
 	export *[ram]:4 tmp;
 }
+dstmode: imm16(%reg)     is mode=10 & reg & op0003!=11 ; imm16
+{
+	local tmp:4 = imm16 + reg;
+	export *[ram]:4 tmp;
+}
+seamode: imm16(%reg)     is mode=10 & reg & op0003!=11 ; imm16
+{
+	local tmp:4 = imm16 + reg;
+	export tmp;
+}
 
-addrmode: "*"^imm16(%reg) is mode=11 & reg & op0003!=11 ; imm16
+srcmode: "*"^imm16(%reg) is mode=11 & reg & op0003!=11 ; imm16
 {
 	local tmp:4 = imm16 + reg;
 	local tmp2:4 = *[ram] tmp;
 	export *[ram]:4 tmp2;
 }
+dstmode: "*"^imm16(%reg) is mode=11 & reg & op0003!=11 ; imm16
+{
+	local tmp:4 = imm16 + reg;
+	local tmp2:4 = *[ram] tmp;
+	export *[ram]:4 tmp2;
+}
+seamode: "*"^imm16(%reg) is mode=11 & reg & op0003!=11 ; imm16
+{
+	local tmp:4 = imm16 + reg;
+	local tmp2:4 = *[ram] tmp;
+	export tmp2;
+}
 
-addrmode: imm32(%reg)     is mode=8  & reg & op0003!=11 ; imm32
+srcmode: imm32(%reg)     is mode=8  & reg & op0003!=11 ; imm32
 {
 	local tmp:4 = imm32 + reg;
 	export *[ram]:4 tmp;
 }
+dstmode: imm32(%reg)     is mode=8  & reg & op0003!=11 ; imm32
+{
+	local tmp:4 = imm32 + reg;
+	export *[ram]:4 tmp;
+}
+seamode: imm32(%reg)     is mode=8  & reg & op0003!=11 ; imm32
+{
+	local tmp:4 = imm32 + reg;
+	export tmp;
+}
 
-addrmode: "*"^imm32(%reg) is mode=9  & reg & op0003!=11 ; imm32
+srcmode: "*"^imm32(%reg) is mode=9  & reg & op0003!=11 ; imm32
 {
 	local tmp:4 = imm32 + reg;
 	local tmp2:4 = *[ram] tmp;
 	export *[ram]:4 tmp2;
+}
+dstmode: "*"^imm32(%reg) is mode=9  & reg & op0003!=11 ; imm32
+{
+	local tmp:4 = imm32 + reg;
+	local tmp2:4 = *[ram] tmp;
+	export *[ram]:4 tmp2;
+}
+seamode: "*"^imm32(%reg) is mode=9  & reg & op0003!=11 ; imm32
+{
+	local tmp:4 = imm32 + reg;
+	local tmp2:4 = *[ram] tmp;
+	export tmp2;
 }
 
 #TODO  so is broken here
-addrmode: so(%ap)          is mode=7  & so & ap & op0003<15
+srcmode: so(%ap)          is mode=7  & so & ap & op0003<15
 {
 	local tmp:4 = so;
 	tmp = tmp + ap;
 	export *[ram]:4 tmp;
 }
+dstmode: so(%ap)          is mode=7  & so & ap & op0003<15
+{
+	local tmp:4 = so;
+	tmp = tmp + ap;
+	export *[ram]:4 tmp;
+}
+seamode: so(%ap)          is mode=7  & so & ap & op0003<15
+{
+	local tmp:4 = so;
+	tmp = tmp + ap;
+	export tmp;
+}
 
 #TODO  so is broken here
-addrmode: so(%fp)          is mode=6  & so & fp & op0003<15
+srcmode: so(%fp)          is mode=6  & so & fp & op0003<15
 {
 	local tmp:4 = so;
 	tmp = tmp + fp;
 	export *[ram]:4 tmp;
 }
+dstmode: so(%fp)          is mode=6  & so & fp & op0003<15
+{
+	local tmp:4 = so;
+	tmp = tmp + fp;
+	export *[ram]:4 tmp;
+}
+seamode: so(%fp)          is mode=6  & so & fp & op0003<15
+{
+	local tmp:4 = so;
+	tmp = tmp + fp;
+	export tmp;
+}
 
 # immediate
-addrmode: "&"^imm8         is mode=6  & op0003=15 ; imm8
+srcmode: "&"^imm8         is mode=6  & op0003=15 ; imm8
 {
 	local tmp:4 = imm8;
 	export *[const] tmp;
 }
 
-addrmode: "&"^imm16        is mode=5  & op0003=15 ; imm16
+srcmode: "&"^imm16        is mode=5  & op0003=15 ; imm16
 {
 	local tmp:4 = imm16;
 	export *[const] tmp;
 }
 
-addrmode: "&"^imm32        is mode=4  & op0003=15 ; imm32
+srcmode: "&"^imm32        is mode=4  & op0003=15 ; imm32
 {
 	local tmp:4 = imm32;
 	export *[const] tmp;
 }
 
-addrmode: "&"^lit          is (mode=0|mode=1|mode=2|mode=3) & op0407 & so [ lit = (op0407 << 4) | so; ]
+srcmode: "&"^lit          is (mode=0|mode=1|mode=2|mode=3) & op0407 & so [ lit = (op0407 << 4) | so; ]
 {
 	local tmp:4 = lit;
 	export *[const] tmp;
 }
 
-addrmode: "&"^lit          is mode=15 & so [ lit = (-1 << 4) | so; ]
+srcmode: "&"^lit          is mode=15 & so [ lit = (-1 << 4) | so; ]
 {
 	local tmp:4 = lit;
 	export *[const] tmp;
 }
 
 # register
-addrmode: %reg             is mode=4  & reg & op0003!=15
+srcmode: %reg             is mode=4  & reg & op0003!=15
+{
+	#TODO  looks broken in pcode
+	export reg;
+}
+dstmode: %reg             is mode=4  & reg & op0003!=15
 {
 	#TODO  looks broken in pcode
 	export reg;
 }
 
-addrmode: (%reg)           is mode=5  & reg & (op0003!=15 & op0003!=11)
+srcmode: (%reg)           is mode=5  & reg & (op0003!=15 & op0003!=11)
+{
+	local tmp:4 = *[ram]:4 reg;
+	export tmp;
+}
+dstmode: (%reg)           is mode=5  & reg & (op0003!=15 & op0003!=11)
 {
 	local tmp:4 = *[ram]:4 reg;
 	export tmp;
@@ -249,22 +371,35 @@ addrmode: (%reg)           is mode=5  & reg & (op0003!=15 & op0003!=11)
 
 #TODO  super broken
 # special
-exaddrmode: "{sbyte}"^addrmode  is extype=7 ; addrmode { local tmp:4 = sext(addrmode:1); export tmp; }
-exaddrmode: "{shalf}"^addrmode  is extype=6 ; addrmode { local tmp:4 = sext(addrmode:2); export tmp; }
-exaddrmode: "{sword}"^addrmode  is extype=4 ; addrmode { local tmp:4 = addrmode:4; export tmp; }
-exaddrmode: "{ubyte}"^addrmode  is extype=3 ; addrmode { local tmp:4 = zext(addrmode:1); export tmp; }
-exaddrmode: "{uhalf}"^addrmode  is extype=2 ; addrmode { local tmp:4 = zext(addrmode:2); export tmp; }
-exaddrmode: "{uword}"^addrmode  is extype=0 ; addrmode { local tmp:4 = addrmode:4; export tmp; }
+exsrc: "{sbyte}"^srcmode  is extype=7 ; srcmode { local tmp:4 = sext(srcmode:1); export tmp; }
+exsrc: "{shalf}"^srcmode  is extype=6 ; srcmode { local tmp:4 = sext(srcmode:2); export tmp; }
+exsrc: "{sword}"^srcmode  is extype=4 ; srcmode { local tmp:4 = srcmode:4; export tmp; }
+exsrc: "{ubyte}"^srcmode  is extype=3 ; srcmode { local tmp:4 = zext(srcmode:1); export tmp; }
+exsrc: "{uhalf}"^srcmode  is extype=2 ; srcmode { local tmp:4 = zext(srcmode:2); export tmp; }
+exsrc: "{uword}"^srcmode  is extype=0 ; srcmode { local tmp:4 = srcmode:4; export tmp; }
 
-addrmode: exaddrmode is (mode=14 & op0003!=15) ... & exaddrmode { local tmp:4 = exaddrmode; export tmp; }
+srcmode: exsrc is (mode=14 & op0003!=15) ... & exsrc { local tmp:4 = exsrc; export tmp; }
 
-count:  addrmode is addrmode { export addrmode; }
-src:    addrmode is addrmode { export addrmode; }
-src1:   addrmode is addrmode { export addrmode; }
-src2:   addrmode is addrmode { export addrmode; }
-dst:    addrmode is addrmode { export addrmode; }
-width:  addrmode is addrmode { export addrmode; }
-offset: addrmode is addrmode { export addrmode; }
+exdst: "{sbyte}"^dstmode  is extype=7 ; dstmode { local tmp:4 = sext(dstmode:1); export tmp; }
+exdst: "{shalf}"^dstmode  is extype=6 ; dstmode { local tmp:4 = sext(dstmode:2); export tmp; }
+exdst: "{sword}"^dstmode  is extype=4 ; dstmode { local tmp:4 = dstmode:4; export tmp; }
+exdst: "{ubyte}"^dstmode  is extype=3 ; dstmode { local tmp:4 = zext(dstmode:1); export tmp; }
+exdst: "{uhalf}"^dstmode  is extype=2 ; dstmode { local tmp:4 = zext(dstmode:2); export tmp; }
+exdst: "{uword}"^dstmode  is extype=0 ; dstmode { local tmp:4 = dstmode:4; export tmp; }
+
+dstmode: exdst is (mode=14 & op0003!=15) ... & exdst { local tmp:4 = exdst; export tmp; }
+
+
+srcea:  seamode is seamode { export seamode; }
+src:    srcmode is srcmode { export srcmode; }
+src1:   srcmode is srcmode { export srcmode; }
+src2:   srcmode is srcmode { export srcmode; }
+width:  srcmode is srcmode { export srcmode; }
+offset: srcmode is srcmode { export srcmode; }
+count:  srcmode is srcmode { export srcmode; }
+
+dst:    dstmode is dstmode { export dstmode; }
+
 
 # branch conditions
 CC: "GE"     is op0205=0  { local tmp:1 = (($(Ncc) == 0) | ($(Ccc) == 1)); export tmp; }    # greater than or equal
@@ -421,44 +556,44 @@ CC_: "EQL"   is op0205=15 { local tmp:1 = ($(Zcc) == 1); export tmp; }          
 
 
 # :BCCB  0x53
-# :BCCH  0x52
 # :BCSB  0x5b
-# :BCSH  0x5a
 # :BEB   0x6f
 # :BEB   0x7f
-# :BEH   0x6e
-# :BEH   0x7e
 # :BGB   0x47
 # :BGEB  0x43
-# :BGEH  0x42
 # :BGEUB 0x53
-# :BGEUH 0x52
-# :BGH   0x46
 # :BGUB  0x57
-# :BGUH  0x56
 # :BLB   0x4b
 # :BLEB  0x4f
-# :BLEH  0x4e
 # :BLEUB 0x5f
-# :BLEUH 0x5e
-# :BLH   0x4a
 # :BLUB  0x5b
-# :BLUH  0x5a
 # :BNEB  0x67
 # :BNEB  0x77
-# :BNEH  0x66
-# :BNEH  0x76
 # :BRB   0x7b
-# :BRH   0x7a
 # :BVCB  0x63
-# :BVCH  0x62
 # :BVSB  0x6b
-# :BVSH  0x6a
 :B^CC^"B" disp8 is op0607=1 & op0101=1 & op0000=1 & CC ; disp8
 {
 	if (CC != 0) goto disp8;
 }
 
+# :BCCH  0x52
+# :BCSH  0x5a
+# :BEH   0x6e
+# :BEH   0x7e
+# :BGEH  0x42
+# :BGEUH 0x52
+# :BGH   0x46
+# :BGUH  0x56
+# :BLEH  0x4e
+# :BLEUH 0x5e
+# :BLH   0x4a
+# :BLUH  0x5a
+# :BNEH  0x66
+# :BNEH  0x76
+# :BRH   0x7a
+# :BVCH  0x62
+# :BVSH  0x6a
 :B^CC^"H" disp16 is op0607=1 & op0101=1 & op0000=0 & CC ; disp16
 {
 	if (CC != 0) goto disp16;
@@ -1004,9 +1139,9 @@ define pcodeop verno;
 	dst = *[ram]:4 sp;
 }
 
-:PUSHAW src is op=0xe0 ; src
+:PUSHAW srcea is op=0xe0 ; srcea
 {
-	*[ram]:4 sp = src;
+	*[ram]:4 sp = srcea;
 	sp = sp + 4;
 }
 
@@ -1063,9 +1198,10 @@ restore:       is restore_r8  { fp = *[ram]:4 sp; sp = sp + 4; build restore_r8;
 
 :RESTORE %reg is op=0x18 ; (mode=4|mode=5) & reg & restore
 {
-	sp = fp - 28;
+	local tempa:4 = fp - 28;
+	sp = tempa;
 	build restore;
-	sp = fp - 28;
+	sp = tempa;
 }
 
 :RET     is op=0x08
@@ -1099,26 +1235,26 @@ define pcodeop process_return;
 	cond_case_1(dst);
 }
 
-
-save_r0: r0 is op0003=0 & r0 { *[ram]:4 sp = r0; sp = sp + 4; }
-save_r1: r1 is op0003=1 & r1 { *[ram]:4 sp = r1; sp = sp + 4; }
-save_r1:    is save_r0  { build save_r0; *[ram]:4 sp = r1; sp = sp + 4; }
-save_r2: r2 is op0003=2 & r2 { *[ram]:4 sp = r2; sp = sp + 4; }
-save_r2:    is save_r1  { build save_r1; *[ram]:4 sp = r2; sp = sp + 4; }
-save_r3: r3 is op0003=3 & r3 { *[ram]:4 sp = r3; sp = sp + 4; }
-save_r3:    is save_r2  { build save_r2; *[ram]:4 sp = r3; sp = sp + 4; }
-save_r4: r4 is op0003=4 & r4 { *[ram]:4 sp = r4; sp = sp + 4; }
-save_r4:    is save_r3  { build save_r3; *[ram]:4 sp = r4; sp = sp + 4; }
-save_r5: r5 is op0003=5 & r5 { *[ram]:4 sp = r5; sp = sp + 4; }
-save_r5:    is save_r4  { build save_r4; *[ram]:4 sp = r5; sp = sp + 4; }
-save_r6: r6 is op0003=6 & r6 { *[ram]:4 sp = r6; sp = sp + 4; }
-save_r6:    is save_r5  { build save_r5; *[ram]:4 sp = r6; sp = sp + 4; }
-save_r7: r7 is op0003=7 & r7 { *[ram]:4 sp = r7; sp = sp + 4; }
-save_r7:    is save_r6  { build save_r6; *[ram]:4 sp = r7; sp = sp + 4; }
-save_r8: r8 is op0003=8 & r8 { *[ram]:4 sp = r8; sp = sp + 4; }
-save_r8:    is save_r7  { build save_r7; *[ram]:4 sp = r8; sp = sp + 4; }
-save:    fp is op0003=9 & fp { *[ram]:4 sp = fp; sp = sp + 4; }
-save:       is save_r8  { *[ram]:4 sp = fp; sp = sp + 4; build save_r8; }
+# 0,1,2 are determinate, but SP and FP will not point beyond register-save area
+save_r0: r0 is op0003=0 & r0 {                *[ram]:4 sp = r0; sp = sp + 4; }
+save_r1: r1 is op0003=1 & r1 {                *[ram]:4 sp = r1; sp = sp + 4; }
+save_r1:    is save_r0       { build save_r0; *[ram]:4 sp = r1; sp = sp + 4; }
+save_r2: r2 is op0003=2 & r2 {                *[ram]:4 sp = r2; sp = sp + 4; }
+save_r2:    is save_r1       { build save_r1; *[ram]:4 sp = r2; sp = sp + 4; }
+save_r3: r3 is op0003=3 & r3 {                *[ram]:4 sp = r3; sp = sp + 4; }
+save_r3:    is save_r2       { build save_r2; *[ram]:4 sp = r3; sp = sp + 4; }
+save_r4: r4 is op0003=4 & r4 {                *[ram]:4 sp = r4; sp = sp + 4; }
+save_r4:    is save_r3       { build save_r3; *[ram]:4 sp = r4; sp = sp + 4; }
+save_r5: r5 is op0003=5 & r5 {                *[ram]:4 sp = r5; sp = sp + 4; }
+save_r5:    is save_r4       { build save_r4; *[ram]:4 sp = r5; sp = sp + 4; }
+save_r6: r6 is op0003=6 & r6 {                *[ram]:4 sp = r6; sp = sp + 4; }
+save_r6:    is save_r5       { build save_r5; *[ram]:4 sp = r6; sp = sp + 4; }
+save_r7: r7 is op0003=7 & r7 {                *[ram]:4 sp = r7; sp = sp + 4; }
+save_r7:    is save_r6       { build save_r6; *[ram]:4 sp = r7; sp = sp + 4; }
+save_r8: r8 is op0003=8 & r8 {                *[ram]:4 sp = r8; sp = sp + 4; }
+save_r8:    is save_r7       { build save_r7; *[ram]:4 sp = r8; sp = sp + 4; }
+save:    fp is op0003=9 & fp { *[ram]:4 sp = fp; sp = sp + 4;                }
+save:       is save_r8       { *[ram]:4 sp = fp; sp = sp + 4; build save_r8; }
 
 :SAVE %reg  is op=0x10 ; (mode=4|mode=5) & reg & save
 {
