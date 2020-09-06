@@ -928,17 +928,18 @@ define pcodeop gate;
 	r0 = tmp << 2;
 }
 
-:JMP dst    is op=0x24 ; dst
+:JMP deamode    is op=0x24 ; deamode
 {
-	goto [dst];
+	goto [deamode];
 }
 
-:JSB dst    is op=0x34 ; dst
+:JSB deamode    is op=0x34 ; deamode
 {
 	local tmp:4 = inst_next;
 	*[ram]:4 sp = tmp;
 	sp = sp + 4;
-	call [dst];
+	#TODO  call or goto?
+	call [deamode];
 }
 
 :LLSB3 count,src,dst  is op=0xd3 ; count ; src; dst
@@ -1047,9 +1048,9 @@ define pcodeop gate;
 	dst = tmp;
 }
 
-:MOVAW src,dst  is op=0x04; src ; dst
+:MOVAW seamode,dst  is op=0x04; seamode ; dst
 {
-	local tmp:4 = src;
+	local tmp:4 = seamode;
 	dst = tmp;
 	cond_case_1(dst);
 }
@@ -1204,18 +1205,21 @@ define pcodeop verno;
 {
 	sp = sp - 4;
 	dst = *[ram]:4 sp;
+	cond_case_1(dst);
 }
 
 :PUSHAW seamode is op=0xe0 ; seamode
 {
 	*[ram]:4 sp = seamode;
 	sp = sp + 4;
+	cond_case_1(seamode);
 }
 
 :PUSHW src  is op=0xa0 ; src
 {
 	*[ram]:4 sp = src;
 	sp = sp + 4;
+	cond_case_1(src);
 }
 
 # :RCC   0x50
@@ -1340,83 +1344,84 @@ define pcodeop coproc_write;
 	psw = coproc_write(tmp);
 }
 
-:SPOPRS op0031,src is op=0x22 ; op0031 ; src
+:SPOPRS op0031,seamode is op=0x22 ; op0031 ; seamode
 {
 	local tmp:4 = op0031;
 	local tmp2:1 = 1;
 	coproc_write(tmp);
-	psw = coproc_read(tmp2, src);
+	psw = coproc_read(tmp2, seamode);
 }
 
-:SPOPRD op0031,src is op=0x02 ; op0031 ; src
+:SPOPRD op0031,seamode is op=0x02 ; op0031 ; seamode
 {
 	local tmp:4 = op0031;
 	local tmp2:1 = 2;
 	coproc_write(tmp);
-	psw = coproc_read(tmp2, src);
+	psw = coproc_read(tmp2, seamode);
 }
 
-:SPOPRT op0031,src is op=0x06 ; op0031 ; src
+:SPOPRT op0031,seamode is op=0x06 ; op0031 ; seamode
 {
 	local tmp:4 = op0031;
 	local tmp2:1 = 3;
 	coproc_write(tmp);
-	psw = coproc_read(tmp2, src);
+	psw = coproc_read(tmp2, seamode);
 }
 
-:SPOPS2 op0031,src,dst is op=0x23 ; op0031 ; src ; dst
+:SPOPS2 op0031,seamode,dst is op=0x23 ; op0031 ; seamode ; dst
 {
 	local tmp:4 = op0031;
 	local tmp2:1 = 1;
 	dst = coproc_write(tmp);
-	psw = coproc_read(tmp2, src);
+	psw = coproc_read(tmp2, seamode);
 }
 
-:SPOPD2 op0031,src,dst is op=0x03 ; op0031 ; src ; dst
+:SPOPD2 op0031,seamode,dst is op=0x03 ; op0031 ; seamode ; dst
 {
 	local tmp:4 = op0031;
 	local tmp2:1 = 2;
 	dst = coproc_write(tmp);
-	psw = coproc_read(tmp2, src);
+	psw = coproc_read(tmp2, seamode);
 }
 
-:SPOPT2 op0031,src,dst is op=0x07 ; op0031 ; src ; dst
+:SPOPT2 op0031,seamode,dst is op=0x07 ; op0031 ; seamode ; dst
 {
 	local tmp:4 = op0031;
 	local tmp2:1 = 3;
 	dst = coproc_write(tmp);
-	psw = coproc_read(tmp2, src);
+	psw = coproc_read(tmp2, seamode);
 }
 
-:SPOPWS op0031,dst is op=0x33 ; op0031 ; dst
+:SPOPWS op0031,deamode is op=0x33 ; op0031 ; deamode
 {
 	local tmp:4 = op0031;
 	local tmp2:1 = 1;
 	psw = coproc_write(tmp);
-	coproc_write(tmp2, dst);
+	coproc_write(tmp2, deamode);
 }
 
-:SPOPWD op0031,dst is op=0x31 ; op0031 ; dst
+:SPOPWD op0031,deamode is op=0x31 ; op0031 ; deamode
 {
 	local tmp:4 = op0031;
 	local tmp2:1 = 2;
 	psw = coproc_write(tmp);
-	coproc_write(tmp2, dst);
+	coproc_write(tmp2, deamode);
 }
 
-:SPOPWT op0031,dst is op=0x17 ; op0031 ; dst
+:SPOPWT op0031,deamode is op=0x17 ; op0031 ; deamode
 {
 	local tmp:4 = op0031;
 	local tmp2:1 = 3;
 	psw = coproc_write(tmp);
-	coproc_write(tmp2, dst);
+	coproc_write(tmp2, deamode);
 }
 
 :STRCPY  is op=0x30 ; op0007=0x35
 {
     <start>
-	*[ram]:1 r1 = *[ram]:1 r0;
-	if ((*[ram]:1 r1) == 0) goto inst_next;
+	local tmp:1 = *[ram]:1 r0;
+	*[ram]:1 r1 = tmp;
+	if (tmp == 0) goto inst_next;
 	r1 = r1 + 1;
 	r0 = r0 + 1;
 	goto <start>;
@@ -1472,27 +1477,28 @@ define pcodeop coproc_write;
 	cond_case_2(dst);
 }
 
-:SWAPBI dst  is op=0x1f ; dst
+#TODO  these look broken
+:SWAPBI deamode  is op=0x1f ; deamode
 {
-	local tempa:4 = zext(dst:1);
-	dst = zext(r0:1);
-	cond_case_1(dst);
+	local tempa:4 = *[ram]:4 deamode;
+	*[ram]:1 deamode = r0:1;
+	cond_case_1(tempa);
 	r0 = tempa;
 }
 
-:SWAPHI dst is op=0x1e ; dst
+:SWAPHI deamode is op=0x1e ; deamode
 {
-	local tempa:4 = zext(dst:2);
-	dst = zext(r0:2);
-	cond_case_1(dst);
+	local tempa:4 = *[ram]:4 deamode;
+	*[ram]:2 deamode = r0:2;
+	cond_case_1(tempa);
 	r0 = tempa;
 }
 
-:SWAPWI dst is op=0x1c ; dst
+:SWAPWI deamode is op=0x1c ; deamode
 {
-	local tempa:4 = dst;
-	dst = r0;
-	cond_case_1(dst);
+	local tempa:4 = *[ram]:4 deamode;
+	*[ram]:4 deamode = r0;
+	cond_case_1(tempa);
 	r0 = tempa;
 }
 
