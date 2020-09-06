@@ -149,6 +149,11 @@ seamode: "$"^op0031      is mode=7  & op0003=15 ; op0031
 	local tmp:4 = op0031;
 	export tmp;
 }
+deamode: "$"^op0031      is mode=7  & op0003=15 ; op0031
+{
+	local tmp:4 = op0031;
+	export tmp;
+}
 
 srcmode: "*$"^op0031     is mode=14 & op0003=15 ; op0031
 {
@@ -163,6 +168,12 @@ dstmode: "*$"^op0031     is mode=14 & op0003=15 ; op0031
 	export *tmp2;
 }
 seamode: "*$"^op0031     is mode=14 & op0003=15 ; op0031
+{
+	local tmp:4 = op0031;
+	local tmp2:4 = *[ram]:4 tmp;
+	export tmp2;
+}
+deamode: "*$"^op0031     is mode=14 & op0003=15 ; op0031
 {
 	local tmp:4 = op0031;
 	local tmp2:4 = *[ram]:4 tmp;
@@ -185,6 +196,12 @@ seamode: imm8(%reg)     is mode=12 & reg & op0003!=11 ; imm8
 	local tmp:4 = imm8 + reg;
 	export tmp;
 }
+deamode: imm8(%reg)     is mode=12 & reg & op0003!=11 ; imm8
+{
+	local tmp:4 = imm8 + reg;
+	export tmp;
+}
+
 
 srcmode: "*"^imm8(%reg) is mode=13 & reg & op0003!=11 ; imm8
 {
@@ -204,6 +221,12 @@ seamode: "*"^imm8(%reg) is mode=13 & reg & op0003!=11 ; imm8
 	local tmp2:4 = *[ram] tmp;
 	export tmp2;
 }
+deamode: "*"^imm8(%reg) is mode=13 & reg & op0003!=11 ; imm8
+{
+	local tmp:4 = imm8 + reg;
+	local tmp2:4 = *[ram] tmp;
+	export tmp2;
+}
 
 srcmode: imm16(%reg)     is mode=10 & reg & op0003!=11 ; imm16
 {
@@ -216,6 +239,11 @@ dstmode: imm16(%reg)     is mode=10 & reg & op0003!=11 ; imm16
 	export *[ram]:4 tmp;
 }
 seamode: imm16(%reg)     is mode=10 & reg & op0003!=11 ; imm16
+{
+	local tmp:4 = imm16 + reg;
+	export tmp;
+}
+deamode: imm16(%reg)     is mode=10 & reg & op0003!=11 ; imm16
 {
 	local tmp:4 = imm16 + reg;
 	export tmp;
@@ -239,6 +267,12 @@ seamode: "*"^imm16(%reg) is mode=11 & reg & op0003!=11 ; imm16
 	local tmp2:4 = *[ram] tmp;
 	export tmp2;
 }
+deamode: "*"^imm16(%reg) is mode=11 & reg & op0003!=11 ; imm16
+{
+	local tmp:4 = imm16 + reg;
+	local tmp2:4 = *[ram] tmp;
+	export tmp2;
+}
 
 srcmode: imm32(%reg)     is mode=8  & reg & op0003!=11 ; imm32
 {
@@ -251,6 +285,11 @@ dstmode: imm32(%reg)     is mode=8  & reg & op0003!=11 ; imm32
 	export *[ram]:4 tmp;
 }
 seamode: imm32(%reg)     is mode=8  & reg & op0003!=11 ; imm32
+{
+	local tmp:4 = imm32 + reg;
+	export tmp;
+}
+deamode: imm32(%reg)     is mode=8  & reg & op0003!=11 ; imm32
 {
 	local tmp:4 = imm32 + reg;
 	export tmp;
@@ -269,6 +308,12 @@ dstmode: "*"^imm32(%reg) is mode=9  & reg & op0003!=11 ; imm32
 	export *[ram]:4 tmp2;
 }
 seamode: "*"^imm32(%reg) is mode=9  & reg & op0003!=11 ; imm32
+{
+	local tmp:4 = imm32 + reg;
+	local tmp2:4 = *[ram] tmp;
+	export tmp2;
+}
+deamode: "*"^imm32(%reg) is mode=9  & reg & op0003!=11 ; imm32
 {
 	local tmp:4 = imm32 + reg;
 	local tmp2:4 = *[ram] tmp;
@@ -294,6 +339,12 @@ seamode: so(%ap)          is mode=7  & so & ap & op0003<15
 	tmp = tmp + ap;
 	export tmp;
 }
+deamode: so(%ap)          is mode=7  & so & ap & op0003<15
+{
+	local tmp:4 = so;
+	tmp = tmp + ap;
+	export tmp;
+}
 
 #TODO  so is broken here
 srcmode: so(%fp)          is mode=6  & so & fp & op0003<15
@@ -309,6 +360,12 @@ dstmode: so(%fp)          is mode=6  & so & fp & op0003<15
 	export *[ram]:4 tmp;
 }
 seamode: so(%fp)          is mode=6  & so & fp & op0003<15
+{
+	local tmp:4 = so;
+	tmp = tmp + fp;
+	export tmp;
+}
+deamode: so(%fp)          is mode=6  & so & fp & op0003<15
 {
 	local tmp:4 = so;
 	tmp = tmp + fp;
@@ -368,6 +425,8 @@ dstmode: (%reg)           is mode=5  & reg & (op0003!=15 & op0003!=11)
 	local tmp:4 = *[ram]:4 reg;
 	export tmp;
 }
+#TODO  seamode?
+#TODO  deamode?
 
 #TODO  super broken
 # special
@@ -399,6 +458,7 @@ offset: srcmode is srcmode { export srcmode; }
 count:  srcmode is srcmode { export srcmode; }
 
 dst:    dstmode is dstmode { export dstmode; }
+dstea:  deamode is deamode { export deamode; }
 
 
 # branch conditions
@@ -639,10 +699,10 @@ define pcodeop breakpoint;
 	call disp16;
 }
 
-:CALL src,dst    is op=0x2c ; src ; dst
+:CALL srcea,dstea    is op=0x2c ; srcea ; dstea
 {
-	local tempa:4 = src;
-	local tempb:4 = dst;
+	local tempa:4 = srcea;
+	local tempb:4 = dstea;
 	*[ram]:4 sp = inst_next;
 	sp = sp + 4;
 	*[ram]:4 sp = ap;
